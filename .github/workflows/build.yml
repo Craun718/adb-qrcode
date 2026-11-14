@@ -1,0 +1,63 @@
+name: Build package
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            binary: adb-qrcode
+          - runner: windows-2022
+            target: x86_64-pc-windows-msvc
+            binary: adb-qrcode.exe
+          - runner: macos-15
+            target: aarch64-apple-darwin
+            binary: adb-qrcode
+          - runner: macos-15
+            target: x86_64-apple-darwin
+            binary: adb-qrcode
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install Rust target
+        run: rustup target add ${{ matrix.target }}
+      - name: Test
+        run: cargo test --locked --target ${{ matrix.target }}
+        if: matrix.target != 'x86_64-apple-darwin'
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Package
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          BINARY: ${{ matrix.binary }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          target = os.environ['TARGET']
+          binary = Path('target') / target / 'release' / os.environ['BINARY']
+          with ZipFile(f'adb-qrcode-{target}.zip', 'w', ZIP_DEFLATED) as archive:
+              archive.write(binary, binary.name)
+              for name in ('LICENSE', 'README.md', 'README.zh-CN.md'):
+                  archive.write(name)
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: adb-qrcode-${{ matrix.target }}
+          path: adb-qrcode-${{ matrix.target }}.zip
+          if-no-files-found: error
