@@ -40,6 +40,15 @@ The service name must contain 1–63 ASCII letters, digits, or hyphens; the pass
 
 For details on the QR code format and pairing mechanism, see the [AOSP ADB Wi-Fi documentation](https://android.googlesource.com/platform/packages/modules/adb/+/HEAD/docs/dev/adb_wifi.md).
 
+## Builds and releases
+
+Pushes and pull requests build release binaries for Linux x86-64, Windows x86-64, and macOS (Intel and Apple Silicon). Download the ZIP files from the workflow run's artifacts. Pushing a tag builds the same packages and publishes them as assets of a GitHub Release. For example:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## License
 
 [MIT](LICENSE)

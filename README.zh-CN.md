@@ -39,6 +39,15 @@ cargo run --release -- --pair --service-name studio-example --password abc123
 
 二维码格式及配对机制参见 [AOSP ADB Wi-Fi 文档](https://android.googlesource.com/platform/packages/modules/adb/+/HEAD/docs/dev/adb_wifi.md)。
 
+## 构建与发布
+
+推送和 Pull Request 会构建 Linux x86-64、Windows x86-64 及 macOS（Intel 和 Apple Silicon）版本，并将 ZIP 包上传为工作流产物。推送标签后，相同的压缩包会自动作为 GitHub Release 附件发布。例如：
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## 许可证
 
 [MIT](LICENSE)
