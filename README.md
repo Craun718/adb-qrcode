@@ -1,38 +1,45 @@
 # adb-qrcode
 
-在终端生成 Android 无线调试配对二维码，并可通过 ADB 自动发现和配对设备。
+English | [简体中文](README.zh-CN.md)
 
-## 准备
+Generate Android wireless debugging pairing QR codes in the terminal and optionally discover and pair devices automatically using ADB.
 
-- Rust 和 Cargo（编译程序需要）。
-- Android 11 或更高版本的设备，启用开发者选项和无线调试。
-- [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) 中的 `adb`，并确保它在 `PATH` 中。
-- 手机和电脑连接同一网络，并允许 mDNS 设备发现。
+## Requirements
 
-## 使用
+- Rust and Cargo to build the program.
+- An Android 11 or later device with Developer options and Wireless debugging enabled.
+- `adb` from [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools), available in your `PATH`.
+- The phone and computer must be on the same network, with mDNS device discovery allowed.
+
+## Usage
 
 ```sh
 cargo run --release -- --pair
 ```
 
-在手机上打开「开发者选项 → 无线调试 → 使用二维码配对设备」，扫描终端中的二维码。程序等待设备公布配对服务后执行 `adb pair`，默认等待 120 秒；可用 `--timeout 60` 指定秒数。配对成功后，如果设备未自动连接，可在手机无线调试页面查看 IP 地址和调试端口，然后运行 `adb connect IP:端口`。调试端口可能与配对端口不同。
+On your phone, open **Developer options → Wireless debugging → Pair device with QR code** and scan the QR code in the terminal. The program waits for the device to advertise its pairing service, then runs `adb pair`. The default timeout is 120 seconds; use `--timeout 60` to specify a timeout in seconds. If the device does not connect automatically after pairing, find its IP address and debugging port on the Wireless debugging screen and run `adb connect IP:port`. The debugging port may differ from the pairing port.
 
-其他用法：
+Other examples:
 
 ```sh
-# 同时保存 PNG，并自动配对
+# Save a PNG and pair automatically
 cargo run --release -- --pair --png adb.png
 
-# 仅生成二维码；扫码后按提示使用 adb mdns services 和 adb pair 手动配对
+# Generate a QR code only; after scanning, follow the prompts to pair manually
+# using adb mdns services and adb pair
 cargo run --release
 
-# 输出原始内容，供其他程序使用
+# Print the raw payload for use by other programs
 cargo run --quiet -- --payload-only
 
-# 指定名称和密码
+# Specify a service name and password
 cargo run --release -- --pair --service-name studio-example --password abc123
 ```
 
-服务名称支持 1–63 个 ASCII 字母、数字或连字符；密码支持 1–64 个 ASCII 字母或数字。默认名称和密码使用系统安全随机数生成。二维码、PNG、原始内容和配对密码均含配对凭据，请仅与可信设备分享。使用 `--password` 时密码也可能被命令行历史记录保存。
+The service name must contain 1–63 ASCII letters, digits, or hyphens; the password must contain 1–64 ASCII letters or digits. Default names and passwords are generated using the system's secure random number generator. QR codes, PNGs, raw payloads, and pairing passwords contain pairing credentials; share them only with trusted devices. When using `--password`, the password may also be saved in your shell history.
 
-二维码格式及配对机制参见 [AOSP ADB Wi-Fi 文档](https://android.googlesource.com/platform/packages/modules/adb/+/HEAD/docs/dev/adb_wifi.md)。
+For details on the QR code format and pairing mechanism, see the [AOSP ADB Wi-Fi documentation](https://android.googlesource.com/platform/packages/modules/adb/+/HEAD/docs/dev/adb_wifi.md).
+
+## License
+
+[MIT](LICENSE)
