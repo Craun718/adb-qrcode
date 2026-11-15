@@ -22,6 +22,9 @@ On your phone, open **Developer options → Wireless debugging → Pair device w
 Other examples:
 
 ```sh
+# Restart the adb service (runs adb kill-server followed by adb start-server)
+cargo run --release -- restart-adb
+
 # Save a PNG and pair automatically
 cargo run --release -- --pair --png adb.png
 

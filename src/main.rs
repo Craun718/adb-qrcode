@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::time::{Duration, Instant};
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use image::Luma;
 use qrcode::{Color, QrCode};
 
@@ -11,6 +11,9 @@ const ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
 #[derive(Debug, Parser)]
 #[command(version, about = "生成 Android 无线调试配对二维码")]
 struct Cli {
+    /// 额外工具命令
+    #[command(subcommand)]
+    command: Option<Commands>,
     /// 自定义配对服务名称（ASCII 字母、数字和连字符）
     #[arg(long)]
     service_name: Option<String>,
@@ -29,6 +32,12 @@ struct Cli {
     /// 自动配对等待时间（秒）
     #[arg(long, default_value_t = 120, requires = "pair")]
     timeout: u64,
+}
+
+#[derive(Debug, Subcommand)]
+enum Commands {
+    /// 重启 adb 服务
+    RestartAdb,
 }
 
 fn random_string(length: usize) -> Result<String, String> {
@@ -153,7 +162,44 @@ fn pair(service: &str, password: &str, timeout: u64) -> Result<(), String> {
     }
 }
 
+fn run_adb(arguments: &[&str], description: &str) -> Result<String, String> {
+    let output = Command::new("adb").args(arguments).output().map_err(|e| {
+        format!("无法启动 adb，请安装 Android SDK Platform-Tools 并将 adb 加入 PATH: {e}")
+    })?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let details = [stdout.trim(), stderr.trim()]
+        .into_iter()
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    if !output.status.success() {
+        return Err(if details.is_empty() {
+            format!("{description}失败")
+        } else {
+            format!("{description}失败: {details}")
+        });
+    }
+    Ok(details)
+}
+
+fn restart_adb() -> Result<(), String> {
+    run_adb(&["kill-server"], "停止 adb 服务")?;
+    let details = run_adb(&["start-server"], "启动 adb 服务")?;
+    if !details.is_empty() {
+        println!("{details}");
+    }
+    println!("adb 服务已重启。");
+    Ok(())
+}
+
 fn run(cli: Cli) -> Result<(), String> {
+    if let Some(command) = cli.command {
+        return match command {
+            Commands::RestartAdb => restart_adb(),
+        };
+    }
     let service = match cli.service_name {
         Some(s) => s,
         None => format!("studio-{}", random_string(10)?),
@@ -225,5 +271,16 @@ mod tests {
         let value = random_string(128).unwrap();
         assert_eq!(value.len(), 128);
         assert!(value.bytes().all(|b| ALPHABET.contains(&b)));
+    }
+    #[test]
+    fn parses_restart_adb_subcommand() {
+        let cli = Cli::try_parse_from(["adb-qrcode", "restart-adb"]).unwrap();
+        assert!(matches!(cli.command, Some(Commands::RestartAdb)));
+    }
+    #[test]
+    fn keeps_qr_usage_without_subcommand() {
+        let cli = Cli::try_parse_from(["adb-qrcode", "--pair", "--timeout", "10"]).unwrap();
+        assert!(cli.command.is_none());
+        assert!(cli.pair);
     }
 }

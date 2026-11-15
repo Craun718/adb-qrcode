@@ -22,6 +22,9 @@ cargo run --release -- --pair
 其他用法：
 
 ```sh
+# 重启 adb 服务（依次执行 adb kill-server 和 adb start-server）
+cargo run --release -- restart-adb
+
 # 同时保存 PNG，并自动配对
 cargo run --release -- --pair --png adb.png
 
