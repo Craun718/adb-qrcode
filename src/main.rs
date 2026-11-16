@@ -145,7 +145,7 @@ fn pair(service: &str, password: &str, timeout: u64) -> Result<(), String> {
             }
             println!("{}", stdout.trim());
             println!(
-                "配对成功。如设备未自动连接，请在无线调试页面查看 IP 和调试端口，执行 adb connect IP:端口。"
+                "配对成功。如设备未自动连接，请使用 adb-qrcode restart-adb 重启 ADB 后重试。"
             );
             return Ok(());
         }
